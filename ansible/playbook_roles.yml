@@ -1,0 +1,8 @@
+---
+- name: Install Apache Web Server
+  hosts: servers
+  become: yes
+  
+  roles:
+    - { role: deploy_apache_web, when: ansible_system == 'Linux' } 
+
