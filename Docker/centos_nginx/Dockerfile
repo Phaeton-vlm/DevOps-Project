@@ -5,11 +5,11 @@ RUN cd /etc/yum.repos.d/; \
 sed -i 's/mirrorlist/#mirrorlist/g' /etc/yum.repos.d/CentOS-*; \
 sed -i 's|#baseurl=http://mirror.centos.org|baseurl=http://vault.centos.org|g' /etc/yum.repos.d/CentOS-*
 
-RUN dnf update -y
-RUN dnf install -y nginx
-RUN dnf clean all
+RUN dnf update -y && dnf install -y nginx; \
+dnf clean all; \
+mkdir -p /opt/nginx/www.nginxtest.com && mkdir -p /opt/nginx/logs
 
-#COPY index.html /usr/share/nginx/html/
+COPY ./configs/nginx.conf /etc/nginx
 
 EXPOSE 80
 
