@@ -1,0 +1,52 @@
+version: '3'
+
+services:
+
+  centos-7:
+
+    build: ./centos_nginx
+    #image: nginx_image:5.1
+    ports:
+      - 8081:80
+    volumes:
+      - ./site:/usr/share/nginx/html
+    container_name: centos7
+    networks:
+      - test1
+    restart: always
+  
+
+  centos-8:
+
+    build: ./centos2_nginx
+    #image: nginx_image:5.1
+    ports:
+      - 8082:80
+    volumes:
+      - ./site:/usr/share/nginx/html
+    container_name: centos8
+    networks:
+      - test2
+    restart: always
+    
+  
+  ubuntu-20.04:
+
+    build: ./ubuntu_apache2
+    #image: apache_image:3.1
+    ports:
+      - 8083:80
+    volumes:
+      - ./site:/var/www/html/
+    container_name: ubuntu20.04
+    networks:
+      - test3
+    restart: always
+    
+    
+    
+
+networks:
+  test1:
+  test2:
+  test3:

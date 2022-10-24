@@ -9,7 +9,7 @@ RUN dnf update -y
 RUN dnf install -y nginx
 RUN dnf clean all
 
-COPY index.html /usr/share/nginx/html/
+#COPY index.html /usr/share/nginx/html/
 
 EXPOSE 80
 
