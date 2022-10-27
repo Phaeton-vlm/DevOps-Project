@@ -1,0 +1,4 @@
+2022/10/24 08:21:52 [error] 8#0: *2 directory index of "/opt/nginx/www.nginxtest.com/" is forbidden, client: 172.31.0.1, server: _, request: "GET / HTTP/1.1", host: "localhost:8081"
+2022/10/24 08:21:52 [error] 8#0: *2 open() "/opt/nginx/www.nginxtest.com/favicon.ico" failed (2: No such file or directory), client: 172.31.0.1, server: _, request: "GET /favicon.ico HTTP/1.1", host: "localhost:8081", referrer: "http://localhost:8081/"
+2022/10/24 08:21:52 [error] 8#0: *2 open() "/opt/nginx/www.nginxtest.com/404.html" failed (2: No such file or directory), client: 172.31.0.1, server: _, request: "GET /favicon.ico HTTP/1.1", host: "localhost:8081", referrer: "http://localhost:8081/"
+2022/10/24 08:21:53 [error] 8#0: *2 directory index of "/opt/nginx/www.nginxtest.com/" is forbidden, client: 172.31.0.1, server: _, request: "GET / HTTP/1.1", host: "localhost:8081"
