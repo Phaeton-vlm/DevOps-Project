@@ -7,6 +7,7 @@ services:
     build: ./centos_nginx
     ports:
       - 8081:80
+      - 8085:443
     volumes:
       - ./site:/opt/nginx/www.nginxtest.com
       - ./centos_nginx/logs:/opt/nginx/logs
@@ -34,14 +35,14 @@ services:
     build: ./ubuntu_apache2
     ports:
       - 8083:80
+      - 8084:443
     volumes:
       - ./site:/opt/apache2/www.test.com
       - ./ubuntu_apache2/logs:/opt/apache2/logs
     container_name: ubuntu20.04
     networks:
-      - test3
+      - test1
     restart: always
-    
 
 networks:
   test1:

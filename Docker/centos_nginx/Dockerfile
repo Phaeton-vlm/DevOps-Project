@@ -7,10 +7,12 @@ sed -i 's|#baseurl=http://mirror.centos.org|baseurl=http://vault.centos.org|g' /
 
 RUN dnf update -y && dnf install -y nginx; \
 dnf clean all; \
-mkdir -p /opt/nginx/www.nginxtest.com && mkdir -p /opt/nginx/logs
+mkdir -p /opt/nginx/www.nginxtest.com /opt/nginx/logs /opt/cert
 
+COPY ./cert /opt/cert
 COPY ./configs/nginx.conf /etc/nginx
 
 EXPOSE 80
+EXPOSE 443
 
 ENTRYPOINT ["/usr/sbin/nginx", "-g", "daemon off;"]
