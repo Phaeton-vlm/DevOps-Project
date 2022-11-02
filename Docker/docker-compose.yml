@@ -2,49 +2,79 @@ version: '3'
 
 services:
 
-  centos-7:
-
+  centos8:
     build: ./centos_nginx
+    image: centos8:v1
     ports:
       - 8081:80
       - 8085:443
     volumes:
-      - ./site:/opt/nginx/www.nginxtest.com
+      - ./site/testhtml:/opt/nginx/www.nginxtest.com
       - ./centos_nginx/logs:/opt/nginx/logs
-    container_name: centos7
+    container_name: centos8
     networks:
       - test1
     restart: always
-  
 
-  centos-8:
-
-    build: ./centos2_nginx
+  centos8-2:
+    build: ./centos_nginx2
+    image: centos8-2:v1
     ports:
-      - 8082:80
+      - 8090:80
+      - 8091:443
     volumes:
-      - ./site:/usr/share/nginx/html
-    container_name: centos8
+      - ./site/testhtml:/opt/nginx/www.nginxtest.com
+      - ./centos_nginx2/logs:/opt/nginx/logs
+    container_name: centos8-2
     networks:
-      - test2
+      - test1
     restart: always
-    
-  
-  ubuntu-20.04:
 
+  ubuntuapache:
     build: ./ubuntu_apache2
+    image: ubuntuapache:v1
     ports:
       - 8083:80
       - 8084:443
     volumes:
-      - ./site:/opt/apache2/www.test.com
+      - ./site/ubuntuapache:/opt/apache2/www.test.com
       - ./ubuntu_apache2/logs:/opt/apache2/logs
-    container_name: ubuntu20.04
+    container_name: ubuntuapache
     networks:
       - test1
     restart: always
 
+  nginx-reverse-proxy:
+      build: ./nginx-reverse-proxy
+      image: nginx-reverse-proxy:v1
+      ports:
+        - "8098:80"
+        - "8099:443"
+      depends_on:
+        - ubuntuapache
+      volumes:
+        - ./site/nginx-reverse-proxy:/opt/nginx/www.nginxtest.com
+        - ./nginx-reverse-proxy/logs:/opt/nginx/logs
+      container_name: nginx-reverse-proxy
+      links:
+        - "ubuntuapache"
+      networks:
+        - test1
+      restart: always
+
+  haproxy:
+    build: ./haproxy
+    image: haproxy:v1
+    ports:
+      - "8080:80"
+      - "8079:443"
+    container_name: haproxy
+    links:
+      - "ubuntuapache"
+      - "centos8-2"
+      - "centos8"
+    networks:
+      - test1
+    restart: always
 networks:
   test1:
-  test2:
-  test3:
