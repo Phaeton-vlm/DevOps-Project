@@ -12,15 +12,15 @@ services:
       - test1
     restart: always
 
-  centos7-postgresql:
-    build: ./postgresql
-    image: postgresql:v1
-    ports:
-      - 5432:5432
-    container_name: postgresql
-    networks:
-      - test1
-    restart: always
+  # centos7-postgresql:
+  #   build: ./postgresql
+  #   image: postgresql:v1
+  #   ports:
+  #     - 5432:5432
+  #   container_name: postgresql
+  #   networks:
+  #     - test1
+  #   restart: always
 
 networks:
   test1:
