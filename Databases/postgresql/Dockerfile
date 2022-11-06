@@ -7,4 +7,5 @@ RUN yum install -y epel-release maven wget \
     && chown root /startUpScript.sh \
     && chgrp root /startUpScript.sh \
     && chmod 777 /startUpScript.sh
+EXPOSE 5432
 CMD ["/bin/bash","-c","/startUpScript.sh && tail -f /dev/null"]
