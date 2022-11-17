@@ -1,0 +1,62 @@
+version: '3'
+
+services:
+
+  mysqldb:
+    image: mysql:8.0.31
+    container_name: mysql
+    environment:
+      MYSQL_ROOT_PASSWORD: root
+      MYSQL_DATABASE: mytestdb
+      MYSQL_USER: testuser
+      MYSQL_PASSWORD: testpass
+    ports:
+      - "3306:3306"
+    volumes:
+      - ./data:/var/lib/mysql
+    networks:
+      - mysql-net
+    restart: always
+
+  phpmyadmin:
+    build: ./backend
+    image: phpmyadmin:5.2.0
+    container_name: mysqladmin
+    environment:
+      PMA_HOST: mysqldb
+      PMA_PORT: 3306
+      PMA_USER: root
+      PMA_PASSWORD: root
+      PMA_ABSOLUTE_URI: https://localhost/phpmyadmin/
+    volumes:
+      - ./backend/logs:/var/log/apache2
+    ports:
+      - "8000:80"
+    networks:
+      - mysql-net
+    depends_on:
+      - mysqldb
+    restart: always
+
+  frontend:
+    build: ./frontend
+    image: frontend:v1
+    ports:
+      - "8080:80"
+    depends_on:
+      - "phpmyadmin"
+      - "mysqldb"
+    volumes:
+      - ./frontend/site:/opt/nginx/www.nginxtest.com
+      - ./frontend/logs:/opt/nginx/logs
+    container_name: frontend
+    links:
+      - "phpmyadmin"
+    extra_hosts:
+      - "myadmin:127.0.0.1"
+    networks:
+      - mysql-net
+    restart: always
+
+networks:
+  mysql-net:
