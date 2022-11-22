@@ -14,8 +14,6 @@ while True:
             case 1:
                 rand_num = random.randint(1, 20)
                 continue
-            case 2: 
-                break
             case _:
                 break
 
