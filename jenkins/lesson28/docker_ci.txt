@@ -1,0 +1,40 @@
+Started by user Medvedev Vladislav Alexandrovich
+Running as SYSTEM
+Building in workspace /var/lib/jenkins/workspace/docker_ci
+The recommended git tool is: NONE
+using credential 57c98ea5-b4e7-4be5-8908-5fee94609a58
+ > git rev-parse --resolve-git-dir /var/lib/jenkins/workspace/docker_ci/.git # timeout=10
+Fetching changes from the remote Git repository
+ > git config remote.origin.url git@github.com:Phaeton-vlm/DevOps-Project.git # timeout=10
+Fetching upstream changes from git@github.com:Phaeton-vlm/DevOps-Project.git
+ > git --version # timeout=10
+ > git --version # 'git version 2.34.1'
+using GIT_SSH to set credentials 
+Verifying host key using known hosts file, will automatically accept unseen keys
+ > git fetch --tags --force --progress -- git@github.com:Phaeton-vlm/DevOps-Project.git +refs/heads/*:refs/remotes/origin/* # timeout=10
+ > git rev-parse refs/remotes/origin/jenkins^{commit} # timeout=10
+Checking out Revision 3bd18b2efe5ed6e7cda3e5ab22b74ae0c21f13bf (refs/remotes/origin/jenkins)
+ > git config core.sparsecheckout # timeout=10
+ > git checkout -f 3bd18b2efe5ed6e7cda3e5ab22b74ae0c21f13bf # timeout=10
+Commit message: "jenkins test"
+ > git rev-list --no-walk 3bd18b2efe5ed6e7cda3e5ab22b74ae0c21f13bf # timeout=10
+[docker_ci] $ /bin/sh -xe /tmp/jenkins10711477846314496882.sh
++ sudo docker build -t nginx_ci_3:3.0 --build-arg DOCKER_MESSAGE=Hello world!!!!!!!!!!!!!!!!!! jenkins/.
+Sending build context to Docker daemon  2.048kB
+
+Step 1/4 : FROM nginx:1.23
+ ---> 88736fe82739
+Step 2/4 : ARG DOCKER_MESSAGE
+ ---> Using cache
+ ---> 64a97b50e925
+Step 3/4 : WORKDIR /usr/share/nginx/html/
+ ---> Using cache
+ ---> 698f87291dd4
+Step 4/4 : RUN echo "${DOCKER_MESSAGE}" > index.html
+ ---> Running in 38a7e4e43834
+Removing intermediate container 38a7e4e43834
+ ---> 8384685a9f0a
+Successfully built 8384685a9f0a
+Successfully tagged nginx_ci_3:3.0
+Triggering a new build of docker_cd
+Finished: SUCCESS
