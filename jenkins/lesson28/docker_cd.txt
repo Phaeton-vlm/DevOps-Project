@@ -1,0 +1,9 @@
+Started by upstream project "docker_ci" build number 15
+originally caused by:
+ Started by user Medvedev Vladislav Alexandrovich
+Running as SYSTEM
+Building in workspace /var/lib/jenkins/workspace/docker_cd
+[docker_cd] $ /bin/sh -xe /tmp/jenkins8755154007324027451.sh
++ sudo docker run -p 8082:80 -d --name docker_jenkins --rm nginx_ci_3:3.0
+83b2d609b5fb5bf5f0e9058714616b9fff7b0045352da46e9023023d329c76e6
+Finished: SUCCESS
