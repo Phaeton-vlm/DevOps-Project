@@ -1,0 +1,45 @@
+pipeline {
+    agent any
+    
+    environment {
+        JENKINS_IMAGE_NAME = "${params.JENKINS_IMAGE_NAME}"
+        JENKINS_IMAGE_TAG = "${params.JENKINS_IMAGE_TAG}"
+        JENKINS_IMAGE_MESSAGE = "${params.JENKINS_IMAGE_MESSAGE}"
+    }
+
+    stages {
+        stage('Build') {
+            
+            steps {
+                
+                checkout([
+                    $class: 'GitSCM', branches: [[name: "*/jenkins" ]],
+                    doGenerateSubmoduleConfigurations: false,
+                    submoduleCfg: [],
+                    userRemoteConfigs: [
+                        [credentialsId: '57c98ea5-b4e7-4be5-8908-5fee94609a58', url: "git@github.com:Phaeton-vlm/DevOps-Project.git" ]
+                    ]
+                ])
+                
+                script {
+                    sh "sudo docker build -t $JENKINS_IMAGE_NAME:$JENKINS_IMAGE_TAG --build-arg DOCKER_MESSAGE=$JENKINS_IMAGE_MESSAGE jenkins/lesson28/."
+                }
+                
+            }
+            
+        }
+        
+        stage('Run') {
+            
+            steps {
+                
+                script {
+                    sh "sudo docker run -p 8082:80 -d --name docker_jenkins --rm $JENKINS_IMAGE_NAME:$JENKINS_IMAGE_TAG"
+                }
+                
+            }
+            
+        }
+        
+    }
+}
