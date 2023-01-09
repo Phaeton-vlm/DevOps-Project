@@ -1,0 +1,747 @@
+AWSTemplateFormatVersion: '2010-09-09'
+
+Description: "Web application template"
+
+Parameters:
+
+  Environment:
+    Description: Name of VPC
+    Type: String
+    Default: "test-prod"
+
+  BucketName: 
+    Type: String, 
+    Default: "new-project-bucket-1" 
+
+  KeyName:
+    Description: Key Pair for EC2
+    Type: 'AWS::EC2::KeyPair::KeyName'
+
+  VpcCIDR:
+    Default: '10.0.0.0/16'
+    Type: String
+    AllowedPattern: '(\d{1,3})\.(\d{1,3})\.(\d{1,3})\.(\d{1,3})/(\d{1,2})'
+
+  paramPublicSubnet1CIDR:
+    Description: Enter the IP range for the public subnet 
+    Type: String
+    Default: 10.0.1.0/24
+  
+  paramPrivateFrontendSubnet1CIDR:
+    Description: Enter the IP range for the private frontend subnet
+    Type: String
+    Default: 10.0.2.0/24
+
+  paramPrivateFrontendSubnet2CIDR:
+    Description: Enter the IP range for the private frontend subnet
+    Type: String
+    Default: 10.0.3.0/24
+
+  paramPrivateBackendSubnet1CIDR:
+    Description: Enter the IP range for the private backend subnet
+    Type: String
+    Default: 10.0.4.0/24
+
+  paramPrivateBackendSubnet2CIDR:
+    Description: Enter the IP range for the private backend subnet
+    Type: String
+    Default: 10.0.5.0/24
+  
+  paramPrivateDatabaseSubnetCIDR:
+    Description: Enter the IP range for the private database subnet
+    Type: String
+    Default: 10.0.6.0/24
+
+  InstanceType:
+    Description: Type for application frontend
+    Default: 't2.micro'
+    Type: String
+
+  SSHLocationBastion:
+    Description: The IP address range that can be used to SSH to the BASTION
+    Type: String
+    MinLength: '9'
+    MaxLength: '18'
+    Default: 0.0.0.0/0
+    AllowedPattern: "(\\d{1,3})\\.(\\d{1,3})\\.(\\d{1,3})\\.(\\d{1,3})/(\\d{1,2})"
+    ConstraintDescription: Must be a valid IP CIDR range of the form x.x.x.x/x
+
+  EnvironmentType:
+    Description: "Environment type for the DB"
+    Type: String
+    Default: test
+    AllowedValues:
+      - dev
+      - test
+
+  paramDBInstanceIdentifier:
+    Type: String
+    Default: "webapp-db"
+
+  DBUsername:
+    NoEcho: "true"
+    Description: Username for Postgresql
+    Type: String
+    MinLength: "1"
+    MaxLength: "16"
+    AllowedPattern: "[a-zA-Z][a-zA-Z0-9]*"
+    ConstraintDescription: Must begin with a letter and contain only alphanumeric characters.
+    Default: "postgres"
+
+  DBPassword:
+    NoEcho: "true"
+    Description: Password for Postgresql 
+    Type: String
+    MinLength: "8"
+    MaxLength: "24"
+    AllowedPattern: "[a-zA-Z0-9]*"
+    ConstraintDescription: Must contain only alphanumeric characters.
+
+Mappings:
+  AWSInstanceType2Arch:
+    t1.micro:
+      Arch: HVM64
+    t2.nano:
+      Arch: HVM64
+    t2.micro:
+      Arch: HVM64
+    t2.small:
+      Arch: HVM64
+    t2.medium:
+      Arch: HVM64
+    t2.large:
+      Arch: HVM64
+    m1.small:
+      Arch: HVM64
+    m1.medium:
+      Arch: HVM64
+    m1.large:
+      Arch: HVM64
+    m1.xlarge:
+      Arch: HVM64
+    m2.xlarge:
+      Arch: HVM64
+    m2.2xlarge:
+      Arch: HVM64
+    m2.4xlarge:
+      Arch: HVM64
+    m3.medium:
+      Arch: HVM64
+    m3.large:
+      Arch: HVM64
+    m3.xlarge:
+      Arch: HVM64
+    m3.2xlarge:
+      Arch: HVM64
+    m4.large:
+      Arch: HVM64
+    m4.xlarge:
+      Arch: HVM64
+    m4.2xlarge:
+      Arch: HVM64
+    m4.4xlarge:
+      Arch: HVM64
+    m4.10xlarge:
+      Arch: HVM64
+    c1.medium:
+      Arch: HVM64
+    c1.xlarge:
+      Arch: HVM64
+    c3.large:
+      Arch: HVM64
+    c3.xlarge:
+      Arch: HVM64
+    c3.2xlarge:
+      Arch: HVM64
+    c3.4xlarge:
+      Arch: HVM64
+    c3.8xlarge:
+      Arch: HVM64
+    c4.large:
+      Arch: HVM64
+    c4.xlarge:
+      Arch: HVM64
+    c4.2xlarge:
+      Arch: HVM64
+    c4.4xlarge:
+      Arch: HVM64
+    c4.8xlarge:
+      Arch: HVM64
+    g2.2xlarge:
+      Arch: HVMG2
+    g2.8xlarge:
+      Arch: HVMG2
+    r3.large:
+      Arch: HVM64
+    r3.xlarge:
+      Arch: HVM64
+    r3.2xlarge:
+      Arch: HVM64
+    r3.4xlarge:
+      Arch: HVM64
+    r3.8xlarge:
+      Arch: HVM64
+    i2.xlarge:
+      Arch: HVM64
+    i2.2xlarge:
+      Arch: HVM64
+    i2.4xlarge:
+      Arch: HVM64
+    i2.8xlarge:
+      Arch: HVM64
+    d2.xlarge:
+      Arch: HVM64
+    d2.2xlarge:
+      Arch: HVM64
+    d2.4xlarge:
+      Arch: HVM64
+    d2.8xlarge:
+      Arch: HVM64
+    hi1.4xlarge:
+      Arch: HVM64
+    hs1.8xlarge:
+      Arch: HVM64
+    cr1.8xlarge:
+      Arch: HVM64
+    cc2.8xlarge:
+      Arch: HVM64
+  AWSRegionArch2AMI:
+    us-east-1:
+      HVM64: ami-0ff8a91507f77f867
+      HVMG2: ami-0a584ac55a7631c0c
+    us-west-2:
+      HVM64: ami-a0cfeed8
+      HVMG2: ami-0e09505bc235aa82d
+    us-west-1:
+      HVM64: ami-0bdb828fd58c52235
+      HVMG2: ami-066ee5fd4a9ef77f1
+    eu-west-1:
+      HVM64: ami-047bb4163c506cd98
+      HVMG2: ami-0a7c483d527806435
+    eu-west-2:
+      HVM64: ami-f976839e
+      HVMG2: NOT_SUPPORTED
+    eu-west-3:
+      HVM64: ami-0ebc281c20e89ba4b
+      HVMG2: NOT_SUPPORTED
+    eu-central-1:
+      HVM64: ami-0233214e13e500f77
+      HVMG2: ami-06223d46a6d0661c7
+    ap-northeast-1:
+      HVM64: ami-06cd52961ce9f0d85
+      HVMG2: ami-053cdd503598e4a9d
+    ap-northeast-2:
+      HVM64: ami-0a10b2721688ce9d2
+      HVMG2: NOT_SUPPORTED
+    ap-northeast-3:
+      HVM64: ami-0d98120a9fb693f07
+      HVMG2: NOT_SUPPORTED
+    ap-southeast-1:
+      HVM64: ami-08569b978cc4dfa10
+      HVMG2: ami-0be9df32ae9f92309
+    ap-southeast-2:
+      HVM64: ami-09b42976632b27e9b
+      HVMG2: ami-0a9ce9fecc3d1daf8
+    ap-south-1:
+      HVM64: ami-0912f71e06545ad88
+      HVMG2: ami-097b15e89dbdcfcf4
+    us-east-2:
+      HVM64: ami-0b59bfac6be064b78
+      HVMG2: NOT_SUPPORTED
+    ca-central-1:
+      HVM64: ami-0b18956f
+      HVMG2: NOT_SUPPORTED
+    sa-east-1:
+      HVM64: ami-07b14488da8ea02a0
+      HVMG2: NOT_SUPPORTED
+    cn-north-1:
+      HVM64: ami-0a4eaf6c4454eda75
+      HVMG2: NOT_SUPPORTED
+    cn-northwest-1:
+      HVM64: ami-6b6a7d09
+      HVMG2: NOT_SUPPORTED
+
+Resources:
+
+  Vpc:
+    Type: AWS::EC2::VPC
+    Properties:
+      CidrBlock: !Ref VpcCIDR
+      EnableDnsHostnames: True
+      EnableDnsSupport: True
+
+  # Subnets -------------------------------------------------------------------- 
+  PublicSubnet1:
+    Type: AWS::EC2::Subnet
+    DependsOn: Vpc
+    Properties:
+      VpcId: !Ref Vpc
+      CidrBlock: !Ref paramPublicSubnet1CIDR
+      MapPublicIpOnLaunch: True
+      AvailabilityZone: !Select [ 0, !GetAZs '' ]
+      Tags: 
+       - Key: "Name"
+         Value: "PublicSubnet1"
+
+  FrontendSubnet1:
+    Type: AWS::EC2::Subnet
+    DependsOn: Vpc
+    Properties:
+      VpcId: !Ref Vpc
+      CidrBlock: !Ref paramPrivateFrontendSubnet1CIDR
+      MapPublicIpOnLaunch: False
+      AvailabilityZone: !Select [ 1, !GetAZs '' ]
+      Tags: 
+       - Key: "Name"
+         Value: "FrontendSubnet1"
+
+  FrontendSubnet2:
+    Type: AWS::EC2::Subnet
+    DependsOn: Vpc
+    Properties:
+      VpcId: !Ref Vpc
+      CidrBlock: !Ref paramPrivateFrontendSubnet2CIDR
+      MapPublicIpOnLaunch: False
+      AvailabilityZone: !Select [ 2, !GetAZs '' ]
+      Tags: 
+       - Key: "Name"
+         Value: "FrontendSubnet2"
+
+  DatabaseSubnet1:
+    Type: AWS::EC2::Subnet
+    DependsOn: Vpc
+    Properties:
+      VpcId: !Ref Vpc
+      CidrBlock: !Ref paramPrivateDatabaseSubnetCIDR
+      AvailabilityZone: !Select [ 0, !GetAZs '' ]
+      Tags: 
+       - Key: "Name"
+         Value: "DatabaseSubnet1"
+
+  BackendSubnet1:
+    Type: AWS::EC2::Subnet
+    DependsOn: Vpc
+    Properties:
+      VpcId: !Ref Vpc
+      CidrBlock: !Ref paramPrivateBackendSubnet1CIDR
+      MapPublicIpOnLaunch: False
+      AvailabilityZone: !Select [ 0, !GetAZs '' ]
+      Tags: 
+       - Key: "Name"
+         Value: "BackendSubnet1"
+
+  BackendSubnet2:
+    Type: AWS::EC2::Subnet
+    DependsOn: Vpc
+    Properties:
+      VpcId: !Ref Vpc
+      CidrBlock: !Ref paramPrivateBackendSubnet2CIDR
+      MapPublicIpOnLaunch: False
+      AvailabilityZone: !Select [ 1, !GetAZs '' ]
+      Tags: 
+       - Key: "Name"
+         Value: "BackendSubnet2"
+
+  # Internet Gateway -----------------------------------------------------------
+  InternetGateway:
+    Type: AWS::EC2::InternetGateway
+
+  AttachGateway:
+    Type: AWS::EC2::VPCGatewayAttachment
+    DependsOn: Vpc
+    Properties:
+      VpcId: !Ref Vpc
+      InternetGatewayId: !Ref InternetGateway
+
+  RouteTable:
+    Type: AWS::EC2::RouteTable
+    Properties:
+      VpcId: !Ref Vpc
+
+  Route:
+    Type: AWS::EC2::Route
+    DependsOn: InternetGateway
+    Properties:
+      RouteTableId: !Ref RouteTable
+      DestinationCidrBlock: 0.0.0.0/0
+      GatewayId: !Ref InternetGateway
+
+  SubnetRouteTableAssociation1:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    DependsOn: PublicSubnet1
+    Properties:
+      SubnetId: !Ref PublicSubnet1
+      RouteTableId: !Ref RouteTable
+
+  MyEIP:
+    Type: AWS::EC2::EIP
+    DependsOn: AttachGateway
+
+  MyNAT:
+    Type: AWS::EC2::NatGateway
+    DependsOn: PublicSubnet1
+    Properties: 
+      AllocationId: !GetAtt MyEIP.AllocationId
+      SubnetId: !Ref PublicSubnet1
+
+  PrivateRouteTable:
+    Type: AWS::EC2::RouteTable
+    Properties:
+      VpcId: !Ref Vpc
+
+  RouteToNat:
+    Type: AWS::EC2::Route
+    DependsOn: InternetGateway
+    Properties:
+      RouteTableId: !Ref PrivateRouteTable
+      DestinationCidrBlock: 0.0.0.0/0
+      NatGatewayId: !Ref MyNAT  
+
+  BackendPrivateSubnetRouteTableAssociation1:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      SubnetId: !Ref BackendSubnet1
+      RouteTableId: !Ref PrivateRouteTable
+
+  BackendPrivateSubnetRouteTableAssociation2:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      SubnetId: !Ref BackendSubnet2
+      RouteTableId: !Ref PrivateRouteTable
+
+  FrontendPrivateSubnetRouteTableAssociation1:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      SubnetId: !Ref FrontendSubnet1
+      RouteTableId: !Ref PrivateRouteTable
+
+  FrontendPrivateSubnetRouteTableAssociation2:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      SubnetId: !Ref FrontendSubnet2
+      RouteTableId: !Ref PrivateRouteTable
+
+  DatabasePrivateSubnetRouteTableAssociation:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      SubnetId: !Ref DatabaseSubnet1
+      RouteTableId: !Ref PrivateRouteTable
+
+# BASTION --------------------------------------------------------------------
+  BastionSecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: Open SSH Bastion server
+      VpcId: !Ref Vpc
+      SecurityGroupIngress:
+        - IpProtocol: tcp
+          FromPort: 22
+          ToPort: 22
+          CidrIp: !Ref SSHLocationBastion
+
+  BastionInstance:
+    Type: AWS::EC2::Instance
+    DependsOn:
+      - PublicSubnet1
+      - InternetGateway
+      - MyNat
+      - BastionSecurityGroup
+    Properties:
+      ImageId: ami-0a261c0e5f51090b1
+      InstanceType: t2.micro
+      SubnetId: !Ref PublicSubnet1
+      KeyName: !Ref KeyName
+      SecurityGroupIds: 
+        - !Ref BastionSecurityGroup
+      Tags:
+       - Key: Name
+         Value: BastionServer  
+
+# Frontend Application -------------------------------------------------------
+  ALBSecurityGroupFront:
+    Type: 'AWS::EC2::SecurityGroup'
+    Properties:
+      GroupDescription: Enable HTTP from 0.0.0.0/0
+      SecurityGroupIngress:
+        - IpProtocol: tcp
+          FromPort: '80'
+          ToPort: '80'
+          CidrIp: 0.0.0.0/0
+      VpcId: !Ref Vpc
+
+  ASGroupFront:
+   Type: 'AWS::AutoScaling::AutoScalingGroup'
+   DependsOn: 
+    - FrontendSubnet1
+    - FrontendSubnet2
+    - FrontLaunchTemplate
+    - ALBTargetGroupFront
+   Properties:
+     AvailabilityZones:
+       - !Select [ 1, !GetAZs '' ]
+       - !Select [ 2, !GetAZs '' ]
+     VPCZoneIdentifier:
+       - !Ref FrontendSubnet1
+       - !Ref FrontendSubnet2
+     DesiredCapacity: 2
+     HealthCheckGracePeriod: 300
+     HealthCheckType: ELB
+     LaunchTemplate:
+       LaunchTemplateId: !Ref FrontLaunchTemplate
+       Version: !GetAtt FrontLaunchTemplate.LatestVersionNumber
+     MaxSize: 5
+     MinSize: 1
+     TargetGroupARNs:
+       - !Ref ALBTargetGroupFront
+     Tags:
+       - Key: Name
+         PropagateAtLaunch: false
+         Value: ASG-frontend
+
+  FrontLaunchTemplate:
+   Type: AWS::EC2::LaunchTemplate
+   Properties:
+     LaunchTemplateName: !Sub ${AWS::StackName}-launch-template
+     LaunchTemplateData:
+      ImageId:
+          Fn::FindInMap:
+            - AWSRegionArch2AMI
+            - Ref: AWS::Region
+            - Fn::FindInMap:
+                - AWSInstanceType2Arch
+                - Ref: InstanceType
+                - Arch
+      InstanceType: !Ref InstanceType
+      KeyName: !Ref KeyName
+      Monitoring:
+          Enabled: True
+      SecurityGroupIds:
+        - !Ref ALBSecurityGroupFront
+
+  WebServerTargetPolicyFront:
+   Type: AWS::AutoScaling::ScalingPolicy
+   Properties:
+     AutoScalingGroupName: !Ref ASGroupFront
+     PolicyType: TargetTrackingScaling
+     TargetTrackingConfiguration:
+       PredefinedMetricSpecification:
+         PredefinedMetricType: ASGAverageCPUUtilization
+       TargetValue: 40.0
+
+  ApplicationLoadBalancerFront:
+    Type: 'AWS::ElasticLoadBalancingV2::LoadBalancer'
+    DependsOn:  
+      - ALBTargetGroupFront
+      - ASGroupFront
+      - WebServerTargetPolicyFront
+    Properties:
+      SecurityGroups:
+        - !Ref ALBSecurityGroupFront
+      Subnets:
+       - !Ref FrontendSubnet1
+       - !Ref FrontendSubnet2
+
+  ALBListenerFront:
+    Type: 'AWS::ElasticLoadBalancingV2::Listener'
+    Properties:
+      DefaultActions:
+        - Type: forward
+          TargetGroupArn: !Ref ALBTargetGroupFront
+      LoadBalancerArn: !Ref ApplicationLoadBalancerFront
+      Port: '80'
+      Protocol: HTTP
+
+  ALBTargetGroupFront:
+    Type: 'AWS::ElasticLoadBalancingV2::TargetGroup'
+    Properties:
+      HealthCheckIntervalSeconds: 30
+      HealthCheckTimeoutSeconds: 5
+      HealthyThresholdCount: 3
+      Port: 80
+      Protocol: HTTP
+      UnhealthyThresholdCount: 5
+      VpcId: !Ref Vpc
+
+# Backend Application --------------------------------------------------------
+
+  ALBSecurityGroupBack:
+    Type: 'AWS::EC2::SecurityGroup'
+    Properties:
+      GroupDescription: Enable HTTP from 0.0.0.0/0
+      SecurityGroupIngress:
+        - IpProtocol: tcp
+          FromPort: '80'
+          ToPort: '80'
+          CidrIp: 
+            - !Ref FrontendSubnet1
+            - !Ref FrontendSubnet2
+        - IpProtocol: tcp
+          FromPort: 443
+          ToPort: 443
+          CidrIp:
+            - !Ref FrontendSubnet1
+            - !Ref FrontendSubnet2
+      VpcId: !Ref Vpc
+
+  ASGroupBack:
+   Type: 'AWS::AutoScaling::AutoScalingGroup'
+   DependsOn: 
+    - BackendSubnet1
+    - BackendSubnet2
+    - BackLaunchTemplate
+    - ALBTargetGroupBack
+   Properties:
+     AvailabilityZones:
+       - !Select [ 0, !GetAZs '' ]
+       - !Select [ 1, !GetAZs '' ]
+     VPCZoneIdentifier:
+       - !Ref BackendSubnet1
+       - !Ref BackendSubnet2
+     DesiredCapacity: 2
+     HealthCheckGracePeriod: 300
+     HealthCheckType: ELB
+     LaunchTemplate:
+       LaunchTemplateId: !Ref BackLaunchTemplate
+       Version: !GetAtt BackLaunchTemplate.LatestVersionNumber
+     MaxSize: 5
+     MinSize: 1
+     TargetGroupARNs:
+       - !Ref ALBTargetGroupBack
+     Tags:
+       - Key: Name
+         PropagateAtLaunch: false
+         Value: ASG-backend
+
+  BackLaunchTemplate:
+   Type: AWS::EC2::LaunchTemplate
+   Properties:
+     LaunchTemplateName: !Sub ${AWS::StackName}-launch-template
+     LaunchTemplateData:
+      ImageId:
+          Fn::FindInMap:
+            - AWSRegionArch2AMI
+            - Ref: AWS::Region
+            - Fn::FindInMap:
+                - AWSInstanceType2Arch
+                - Ref: InstanceType
+                - Arch
+      InstanceType: !Ref InstanceType
+      KeyName: !Ref KeyName
+      Monitoring:
+          Enabled: True
+      SecurityGroupIds:
+        - !Ref ALBSecurityGroupBack
+
+  WebServerTargetPolicyBack:
+   Type: AWS::AutoScaling::ScalingPolicy
+   Properties:
+     AutoScalingGroupName: !Ref ASGroupBack
+     PolicyType: TargetTrackingScaling
+     TargetTrackingConfiguration:
+       PredefinedMetricSpecification:
+         PredefinedMetricType: ASGAverageCPUUtilization
+       TargetValue: 40.0
+
+  ApplicationLoadBalancerBack:
+    Type: 'AWS::ElasticLoadBalancingV2::LoadBalancer'
+    DependsOn:  
+      - ALBTargetGroupBack
+      - ASGroupBack
+      - WebServerTargetPolicyBack
+    Properties:
+      SecurityGroups:
+        - !Ref ALBSecurityGroupBack
+      Subnets:
+       - !Ref BackendSubnet1
+       - !Ref BackendSubnet2
+
+  ALBListenerBack:
+    Type: 'AWS::ElasticLoadBalancingV2::Listener'
+    Properties:
+      DefaultActions:
+        - Type: forward
+          TargetGroupArn: !Ref ALBTargetGroupBack
+      LoadBalancerArn: !Ref ApplicationLoadBalancerBack
+      Port: '80'
+      Protocol: HTTP
+
+  ALBTargetGroupBack:
+    Type: 'AWS::ElasticLoadBalancingV2::TargetGroup'
+    Properties:
+      HealthCheckIntervalSeconds: 30
+      HealthCheckTimeoutSeconds: 5
+      HealthyThresholdCount: 3
+      Port: 80
+      Protocol: HTTP
+      UnhealthyThresholdCount: 5
+      VpcId: !Ref Vpc
+
+# Database -------------------------------------------------------------------
+  SubnetGroup:
+    Type: "AWS::RDS::DBSubnetGroup"
+    DependsOn: DatabaseSubnet1
+    Properties:
+      DBSubnetGroupName: "subnetgroup"
+      DBSubnetGroupDescription: "Subnet Group"
+      SubnetIds:
+        - !Ref "DatabaseSubnet1"
+
+  DBEC2SecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    DependsOn: WebAppSecurityGroup
+    Properties:
+      GroupName: !Join ["-", [webapp-db-security-group, !Ref EnvironmentType]]
+      GroupDescription: Allow postgres inbound traffic
+      SecurityGroupIngress:
+        - IpProtocol: tcp
+          FromPort: 5432
+          ToPort: 5432
+          SourceSecurityGroupName:
+            Ref: ALBSecurityGroupBack
+      Tags:
+        - Key: Name
+          Value: !Join ["-", [webapp-db-security-group, !Ref EnvironmentType]]
+
+  WebAppDatabase:
+    Type: AWS::RDS::DBInstance
+    DependsOn:
+      - SubnetGroup
+      - DBEC2SecurityGroup
+    Properties:
+      DBSubnetGroupName: !Ref "SubnetGroup"
+      DBInstanceIdentifier: !Ref paramDBInstanceIdentifier
+      VPCSecurityGroups:
+        - !GetAtt DBEC2SecurityGroup.GroupId
+      AllocatedStorage: "5"
+      DBInstanceClass: db.t2.micro
+      Engine: postgres
+      MasterUsername: !Ref DBUsername
+      MasterUserPassword: !Ref DBPassword
+      Tags:
+        - Key: Name
+          Value: !Join ["-", [webapp-rds, !Ref EnvironmentType]]
+    DeletionPolicy: Snapshot
+    UpdateReplacePolicy: Snapshot
+
+#======================= OUTPUTS ====================================
+Outputs:
+
+  VPC:
+    Description: A reference to the created VPC
+    Value: !Ref Vpc
+
+  FrontendSubnets:
+    Description: A list of the frontend private subnets
+    Value: !Join [ ",", [ !Ref FrontendSubnet1, !Ref FrontendSubnet2 ]]
+
+  BackendSubnets:
+    Description: A list of the backend private subnets
+    Value: !Join [ ",", [ !Ref BackendSubnet1, !Ref BackendSubnet2 ]]
+
+  PublicSubnet1:
+    Description: A reference to the public subnet 
+    Value: !Ref PublicSubnet1
+
+  DatabaseSubnet:
+    Description: A reference to the databases subnet 
+    Value: !Ref DatabaseSubnet1
