@@ -22,17 +22,17 @@ module "vpc" {
   name = "vlm-vpc"
   cidr = var.cidr_block
 
-  azs             = data.aws_availability_zones.available.names
-  private_subnets = local.subnets_cidr_blocks.private_back_net
-  public_subnets  = local.subnets_cidr_blocks.public_front_net
+  azs              = data.aws_availability_zones.available.names
+  private_subnets  = local.subnets_cidr_blocks.private_back_net
+  public_subnets   = local.subnets_cidr_blocks.public_front_net
   database_subnets = local.subnets_cidr_blocks.private_db_net
 
-  create_igw = true
+  create_igw         = true
   enable_nat_gateway = true
-  single_nat_gateway = true  
+  single_nat_gateway = true
 
   tags = {
-    Terraform = "true"
+    Terraform   = "true"
     Environment = "test"
   }
 }
